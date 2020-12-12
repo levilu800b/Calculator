@@ -196,6 +196,8 @@ class App extends React.Component {
       this.clear();
     } else if (value === "Del") {
       this.delete();
+    } else if (value === "CE") {
+      this.clearEntry();
     } else if (value === "M+") {
       this.memoryChange("+");
     } else if (value === "M-") {
