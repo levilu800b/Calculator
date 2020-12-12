@@ -8,7 +8,7 @@ class App extends React.Component {
   constructor(props) {
     super(props)
     this.buttons = [
-      "MC", "M+", "M-", "MR",
+      "MC", "M+", "M-", "MR", "CE",
       "C", "/", "X", "Del",
       "7", "8", "9", "-",
       "4", "5", "6", "+",
