@@ -1,261 +1,155 @@
 import React from 'react';
-import History from './history';
-import { Container, Row, Col, Navbar, Button } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import { Component } from 'react';
+import Screen from './components/Screen'
+import SpecialButton from './components/SpecialButton'
+import Numbers from './components/Numbers'
+import Functions from './components/Functions'
+import {doTheMath} from './doMath.js'
 import './App.css';
 
-class App extends React.Component {
-  constructor(props) {
-    super(props)
-    this.buttons = [
-      "MC", "M+", "M-", "MR", "CE",
-      "C", "/", "X", "Del",
-      "7", "8", "9", "-",
-      "4", "5", "6", "+",
-      "1", "2", "3", "=",
-      "%", "0", "."
-    ]
-    this.state = {
-      answer: "",
-      runningTotal: 0,
-      operation: "",
-      memory: 0,
-      memRecall: false,
-      historyString: ""
-    }
-    this.history = React.createRef()
+let firstKeyArr = ["on","off"]
+let secondKeyArr = ["(",")","x","y","( - )","clear"]
+let numbersArr = ["1","2","3","4","5","6","7","8","9","0",".","="]
+let functionsArr = ["+","/","*","-","del"]
+
+class App extends Component {
+
+  state={
+    numbers: '',
+    givenFunction: ''
   }
 
-  applyOperation(currentOperation, percentFlag = false) {
-
-    if (this.state.answer === "") {
-      this.setState({
-        operation: currentOperation
-      })
-    } else {
-      this.setState((state) => {
-        let historyAnswer;
-        if (percentFlag){
-        historyAnswer = state.historyString + " " + (state.answer * 100)
-        + "%  of "
-        } else {
-        historyAnswer = state.historyString + " " + state.answer + " "
-        + currentOperation}
-        return({
-        runningTotal: this.calculateRunningTotal(state.operation,
-          state.runningTotal, parseFloat(state.answer)),
-        operation: currentOperation,
-        answer: "",
-        historyString: historyAnswer
-      })
+  addSpecialButtons=()=>{
+    let firstSpKeys = firstKeyArr.map(eachKey=>{
+      return <SpecialButton func={eachKey} key={eachKey} secondKeysClick={this.secondKeysClick}/>
     })
-  }}
-
-  equals() {
-    if (this.state.answer === "") {
-      this.setState((state) => ({
-        answer: state.runningTotal,
-        operation: "="
-      }))
-    } else {
-      this.setState((state) => {
-        const calculatedAnswer = this.calculateRunningTotal(state.operation,
-          state.runningTotal, parseFloat(state.answer))
-        return ({
-          answer: calculatedAnswer,
-          runningTotal: 0,
-          operation: "=",
-          historyString: state.historyString + " " + state.answer + " = "
-            + calculatedAnswer
-        })
-      }
-        , () => {
-          this.history.current.addToHistory(this.state.historyString)
-          this.setState({ historyString: "" })
-        })
-    }
+    return firstSpKeys
   }
 
-  applyPercentOperation(operation, runningTotal, percentageValue) {
-    this.setState((state) => {
-      const calculatedAnswer = this.calculateRunningTotal(operation, runningTotal, percentageValue)
-      return ({
-        answer: calculatedAnswer,
-        operation: "=",
-        runningTotal: 0,
-        historyString: state.historyString + " " + state.answer + "% = " + calculatedAnswer
-      })
-    }, () => {
-      this.history.current.addToHistory(this.state.historyString)
-      this.setState({ historyString: "" })
-    }
-    )
-  }
-
-  percentageOf(percentage) {
-    this.setState({
-      runningTotal: percentage,
-      answer: percentage
+  addSecondSpecialKeys=()=>{
+    let secondSpKeys = secondKeyArr.map(eachKey=>{
+      return <SpecialButton func={eachKey} key={eachKey} secondKeysClick={this.secondKeysClick}/>
     })
-    this.applyOperation("X", true);
+    return secondSpKeys
   }
 
-  percent() {
-    let percentage = (this.state.answer / 100)
-    let percentageChange = percentage * this.state.runningTotal
-    if (this.state.operation === "") {
-      this.percentageOf(percentage);
-    } else if (this.state.operation === "X" || this.state.operation === "/") {
-      this.applyPercentOperation(this.state.operation, this.state.runningTotal, percentage);
-    } else {
-      this.applyPercentOperation(this.state.operation, this.state.runningTotal, percentageChange);
+  secondKeysClick=(givenItem)=>{
+    if(givenItem==="clear"){
+      document.getElementById("calcScreen").value=""
+    }else if(givenItem === "( - )"){
+      document.getElementById("calcScreen").value+="-"
+    }else if(givenItem === "off"){
+        document.getElementById("calcScreen").value="Turning off"
+        setTimeout(()=>{
+          document.getElementById("calcScreen").value+="."
+        },200)
+        setTimeout(()=>{
+          document.getElementById("calcScreen").value+="."
+        },400)
+        setTimeout(()=>{
+          document.getElementById("calcScreen").value+="."
+        },600)
+        setTimeout(()=>{
+          document.getElementById("calcScreen").value+="."
+        },800)
+        setTimeout(()=>{
+          document.getElementById("calcScreen").value+="."
+        },1000)
+        setTimeout(()=>{
+          document.getElementById("calcScreen").value=""
+        },1200)
+    }else if(givenItem === "on"){
+      document.getElementById("calcScreen").value="Turning on"
+      setTimeout(()=>{
+        document.getElementById("calcScreen").value+="."
+      },200)
+      setTimeout(()=>{
+        document.getElementById("calcScreen").value+="."
+      },400)
+      setTimeout(()=>{
+        document.getElementById("calcScreen").value+="."
+      },600)
+      setTimeout(()=>{
+        document.getElementById("calcScreen").value+="."
+      },800)
+      setTimeout(()=>{
+        document.getElementById("calcScreen").value+="."
+      },1000)
+      setTimeout(()=>{
+        document.getElementById("calcScreen").value="enter equation \n"
+      },1200)
+    }else{
+      document.getElementById("calcScreen").value+=givenItem
     }
   }
 
-
-
-  calculateRunningTotal(operation, currentRunningTotal, newNumber) {
-    if (operation === "+") {
-      return currentRunningTotal + newNumber;
-    } else if (operation === "-") {
-      return currentRunningTotal - newNumber;
-    } else if (operation === "X") {
-      return currentRunningTotal * newNumber;
-    } else if (operation === "/") {
-      return currentRunningTotal / newNumber;
-    } else if (operation === "" || operation === "=") {
-      return newNumber;
-    }
-    throw new Error("invalid operation");
+  handleEquals=(givenValue)=>{
+    doTheMath(givenValue)
   }
 
-  memoryChange(operator) {
-    this.setState((state) => ({
-      memory: this.calculateRunningTotal(operator,
-        state.memory, parseFloat(state.answer))
-    }))
-  }
-
-  memoryClear() {
-    this.setState({
-      memory: 0
+  addFunctions=()=>{
+    let secondSpKeys = functionsArr.map(eachKey=>{
+      return <Functions func={eachKey} key={eachKey} functionClick={this.functionClick}/>
     })
+    return secondSpKeys
   }
 
-  memoryRecall() {
-    this.setState((state) => ({
-      answer: state.memory,
-      memRecall: true
-    }))
+  functionClick=(givenFunc)=>{
+    if(givenFunc === "del" && document.getElementById("calcScreen").value.length > 0){
+      let currentValue = document.getElementById("calcScreen").value.slice(0,-1)
+      document.getElementById("calcScreen").value=currentValue
+
+    }else if(givenFunc !== "del"){
+      document.getElementById("calcScreen").value+=givenFunc
+
+    }
   }
 
-  clear() {
-    this.setState({
-      operation: "",
-      runningTotal: 0,
-      answer: "",
-      memRecall: false,
-      historyString: ""
+  addNumbers=()=>{
+    let funcs = numbersArr.map(eachKey=>{
+      return <Numbers func={eachKey} key={eachKey} numberClick={this.numberClick}/>
     })
-
+    return funcs
   }
 
-  delete() {
-    if (this.state.answer !== "") {
-      this.setState((state) => ({
-        answer: state.answer.substring(0, state.answer.length - 1)
-      }))
+  numberClick=(givenNum)=>{
+    if(givenNum === "="){
+      let wholeValue = document.getElementById("calcScreen").value
+      this.handleEquals(wholeValue)
+    }else{
+
+      document.getElementById("calcScreen").value+=givenNum
     }
   }
 
-
-  handleNumbers(value) {
-    this.setState((state) => {
-      if (state.operation === "=") {
-        return { operation: "", answer: value }
-      } else if (state.memRecall) {
-        return { answer: value, memRecall: false }
-      }
-      let answer = state.answer + value;
-      if (answer === ".") {
-        return { answer: "0." };
-      } else {
-        return { answer: state.answer + value }
-      }
-    })
-  }
-
-  handleOperators(value) {
-    if (value === "+" || value === "-" || value === "/" || value === "X") {
-      this.applyOperation(value);
-    } else if (value === "%") {
-      this.percent();
-    } else if (value === "=") {
-      this.equals();
-    } else if (value === "C") {
-      this.clear();
-    } else if (value === "Del") {
-      this.delete();
-    } else if (value === "CE") {
-      this.clearEntry();
-    } else if (value === "M+") {
-      this.memoryChange("+");
-    } else if (value === "M-") {
-      this.memoryChange("-");
-    } else if (value === "MR") {
-      this.memoryRecall();
-    } else if (value === "MC") {
-      this.memoryClear();
-    } else {
-      console.error("unsupported function", value);
-    }
-  }
-
-  buttonClicked(value) {
-    const regEx = /^(\d|\.)$/
-    if (value.match(regEx)) {
-      this.handleNumbers(value);
-    } else {
-      this.handleOperators(value);
-    }
-  }
-
-  renderButtons() {
-    const elements = [];
-    const buttons = Array.from(this.buttons);
-    let count = 0;
-    while (buttons.length > 0) {
-      count++;
-      const rowButtons = buttons.splice(0, 4);
-      const cols = rowButtons.map((b) =>
-        <Col sm="3" key={b} className="buttonSet">
-          <Button onClick={() => this.buttonClicked(b)}>{b}</Button>
-        </Col>
-      );
-      elements.push(<Row key={count}>{cols}</Row>);
-    }
-
-    return (<div className="buttons">{elements}</div>);
-  }
 
   render() {
-    console.log(this.state.historyString)
+
     return (
-      <Container>
-        <Navbar bg="dark" variant="dark">
-          <Navbar.Brand href="#home">
-            Simple Calculator
-          </Navbar.Brand>
-        </Navbar>
-        <Row>
-          <Col className="answer">
-            <input type="text" value={this.state.answer} readOnly />
-            <div className="operator">{this.state.operation}</div>
-          </Col>
-        </Row>
-        {this.renderButtons()}
-        <History ref={this.history} />
-      </Container>
+      <div className="outerbody">
+        <div className="calculatorBody">
+
+          <Screen/>
+
+          <div className="special-button-container special-btn-cont-margin-top">
+          {this.addSpecialButtons()}
+          </div>
+          <div className="special-button-container second-special-btn-cont-margin-top second-mobile-special">
+          {this.addSecondSpecialKeys()}
+          </div>
+
+          <div className="functions-container">
+            {this.addFunctions()}
+          </div>
+
+          <div className="numbers-container">
+            {this.addNumbers()}
+          </div>
+
+
+        </div>
+
+      </div>
     );
   }
 }
