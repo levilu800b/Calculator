@@ -3,7 +3,7 @@ import { Component } from 'react';
 
 class Numbers extends Component {
 
-  numberClick=(e,givenNum)=>{
+  numberClick=(_e,givenNum)=>{
     this.props.numberClick(givenNum)
   }
 
