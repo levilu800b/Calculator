@@ -12,7 +12,7 @@ const byHundred = (x) => {
   return parseFloat(x) / 100;
 };
 
-const op = {
+const doMath = {
   addition,
   subtraction,
   multiplication,
@@ -24,4 +24,4 @@ const op = {
   neg,
   byHundred,
 };
-export default op;
+export default doMath;

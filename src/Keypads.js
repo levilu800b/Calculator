@@ -1,4 +1,4 @@
-import op from "./operations";
+import op from "./doMath";
 
 export const buttons = [
   [
