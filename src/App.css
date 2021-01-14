@@ -14,6 +14,11 @@ body{
     font-size: 1.1rem;
   }
   
+  .App {
+    text-align: center;
+    height: 100vh;
+    width: 100vw;
+  }
   
   .calculatorBody{
     border: 2px solid gray;

@@ -1,157 +1,263 @@
 import React from 'react';
-import { Component } from 'react';
-import Screen from './components/Screen'
-import SpecialButton from './components/SpecialButton'
-import Numbers from './components/Numbers'
-import Functions from './components/Functions'
-import {doTheMath} from './doMath.js'
 import './App.css';
+import { buttons } from "./dictionary";
+import Screen from './Screen'
+import Button from "react-bootstrap/Button";
+import  { useState } from "react";
 
-let firstKeyArr = ["on","off"]
-let secondKeyArr = ["(",")","x","y","( - )","clear"]
-let numbersArr = ["1","2","3","4","5","6","7","8","9","0",".","="]
-let functionsArr = ["+","/","*","-","del"]
+const buttonMap = buttons || [];
 
-class App extends Component {
+function App() {
+  //Student info under the cut
+  //#region student note
+  //Student note:
+  //this project uses React Hooks for state management, using functional components
+  //as opposed to class components, for more info :
+  // https://reactjs.org/docs/hooks-intro.html
 
-  state={
-    numbers: '',
-    givenFunction: ''
-  }
+  //To not worry about that, remember a simple naming scheme for state management below:
 
-  addSpecialButtons=()=>{
-    let firstSpKeys = firstKeyArr.map(eachKey=>{
-      return <SpecialButton func={eachKey} key={eachKey} secondKeysClick={this.secondKeysClick}/>
-    })
-    return firstSpKeys
-  }
+  //const[value1, changerFunction1] = useState("inital value")
 
-  addSecondSpecialKeys=()=>{
-    let secondSpKeys = secondKeyArr.map(eachKey=>{
-      return <SpecialButton func={eachKey} key={eachKey} secondKeysClick={this.secondKeysClick}/>
-    })
-    return secondSpKeys
-  }
+  //functionally the same as
+  // this.State({ value1 : "inital value"})
+  //instead of this.setState({ value1:" new state"}) format
+  //we use changerFunction("new state")
 
-  secondKeysClick=(givenItem)=>{
-    if(givenItem==="clear"){
-      document.getElementById("calcScreen").value=""
-    }else if(givenItem === "( - )"){
-      document.getElementById("calcScreen").value+="-"
-    }else if(givenItem === "off"){
-        document.getElementById("calcScreen").value="Turning off"
-        setTimeout(()=>{
-          document.getElementById("calcScreen").value+="."
-        },200)
-        setTimeout(()=>{
-          document.getElementById("calcScreen").value+="."
-        },400)
-        setTimeout(()=>{
-          document.getElementById("calcScreen").value+="."
-        },600)
-        setTimeout(()=>{
-          document.getElementById("calcScreen").value+="."
-        },800)
-        setTimeout(()=>{
-          document.getElementById("calcScreen").value+="."
-        },1000)
-        setTimeout(()=>{
-          document.getElementById("calcScreen").value=""
-        },1200)
-    }else if(givenItem === "on"){
-      document.getElementById("calcScreen").value="Turning on"
-      setTimeout(()=>{
-        document.getElementById("calcScreen").value+="."
-      },200)
-      setTimeout(()=>{
-        document.getElementById("calcScreen").value+="."
-      },400)
-      setTimeout(()=>{
-        document.getElementById("calcScreen").value+="."
-      },600)
-      setTimeout(()=>{
-        document.getElementById("calcScreen").value+="."
-      },800)
-      setTimeout(()=>{
-        document.getElementById("calcScreen").value+="."
-      },1000)
-      setTimeout(()=>{
-        document.getElementById("calcScreen").value="enter equation \n"
-      },1200)
-    }else{
-      document.getElementById("calcScreen").value+=givenItem
+  //observe naming convention for value/changer pair in my state implementation as
+  //[stateVal, cStateVal]
+  //as you read through just remember that any function format cStateVal("newVal")
+  //updates state variable with corresponding name to "newVal"
+  //#endregion
+  //#region State
+  //print to console
+  const [val1, cPrint] = useState("");
+  //store container obj to contain functor x2 and a function
+  const [store, cStore] = useState({ v1: "", v2: "", f: " " });
+  //on certain cases we may need second functionality on a button, this will allow for
+  //this logic
+  const [loop, cLoop] = useState(false);
+  //memory store
+  const [mem, cMem] = useState(0);
+  //#endregion
+
+  //#region Button Clcik
+  const onclick = (e, func, trigger) => {
+    const value = e.target.value;
+    //this is the primary logic of the calc function
+    //state stores val1, val2, and functor
+    //if there is no functor logic writes on val1
+    //else logic writes on val2
+
+    //return context specific state changing function
+    let toggle = typeof store.f === "function";
+    //return conetxt specific state value
+    let toggleVar = toggle ? store.v2 : store.v1;
+    //return conetxt specific state changing function
+    let writeFunc = (x, y) => {
+      //optionally add ability to change store function with ternary
+      toggle
+        ? cStore({ ...store, v2: x, f: y ? y : store.f })
+        : cStore({ ...store, v1: x, f: y ? y : store.f });
+      return toggle ? store.v2 : store.v1;
+    };
+
+    if (value === ".") {
+      if (toggleVar.includes(".")) return;
+      writeFunc(!toggleVar ? "0." : toggleVar + ".");
+      cPrint(!toggleVar ? "0." : toggleVar + ".");
+      return;
     }
-  }
 
-  handleEquals=(givenValue)=>{
-    doTheMath(givenValue)
-  }
+    //master switch filter
+    switch (!isNaN(value)) {
+      //if number is clicked
+      case true:
+        //referenceing context specific state var
+        //handle trailing zeros/if we want to reset start of equation]
+        //if were looping on the "=", reset equation, hard code override write on v1, stop loop
+        if (loop) {
+          cStore({ ...store, v1: value, v2: 0, f: " " });
+          cPrint(value);
+          //stop loop
+          cLoop(false);
+          //if state == 0 or state needs to be cleared
+        } else if (toggleVar === 0 || store.f === "clear") {
+          //context specific change state function changes value
+          //also clears function if its set on clear, or if empty, we set the function passed in
+          writeFunc(value, store.f === "clear" ? " " : func);
+          cPrint(value);
+        } else {
+          //else concat on end of state
+          writeFunc(toggleVar + value);
+          cPrint(toggleVar + value);
+        }
+        break;
 
-  addFunctions=()=>{
-    let secondSpKeys = functionsArr.map(eachKey=>{
-      return <Functions func={eachKey} key={eachKey} functionClick={this.functionClick}/>
-    })
-    return secondSpKeys
-  }
+      //if operator is clicked
+      case false:
+        //else if button is not a number
+        switch (value) {
+          //DEL
+          case "DEL":
+            //overwrite context specific state value
+            if (loop) {
+              cStore({
+                ...store,
+                v1: 0,
+              });
+              return;
+            }
 
-  functionClick=(givenFunc)=>{
-    if(givenFunc === "del" && document.getElementById("calcScreen").value.length > 0){
-      let currentValue = document.getElementById("calcScreen").value.slice(0,-1)
-      document.getElementById("calcScreen").value=currentValue
+            let pr = writeFunc(
+              //if there is NOT a function
+              !toggle || loop
+                ? //either remove last or set to zero on v1
+                  store.v1.length > 1
+                  ? store.v1.slice(0, -1)
+                  : 0
+                : //or else repeat to v2
+                store.v2.length > 1
+                ? store.v2.slice(0, -1)
+                : 0
+            );
+            cPrint(pr > 0 ? pr.slice(0, -1) : 0);
 
-    }else if(givenFunc !== "del"){
-      document.getElementById("calcScreen").value+=givenFunc
+            break;
 
+          //memory functions
+          case "MC":
+            cMem(0);
+            break;
+          case "MS":
+            cPrint(" ");
+            cMem(store.v1);
+            cStore({ ...store, v1: "", f: " " });
+            break;
+          case "M-":
+            cPrint(mem - store.v1);
+            cStore({ ...store, v1: mem - store.v1 });
+            cLoop(true);
+            break;
+          case "M+":
+            cPrint(mem + store.v1);
+            cStore({ ...store, v1: mem + store.v1 });
+            cLoop(true);
+            break;
+          case "MR":
+            cPrint(mem);
+            cStore({ ...store, v1: mem, v2: 0 });
+            break;
+
+          //clear
+          case "C":
+            cPrint(0);
+            cStore({ v1: "", v2: "", f: " " });
+            cMem(0);
+            break;
+          case "CE":
+            cPrint("");
+            if (loop) {
+              cStore({ ...store, v1: 0, v2: 0 });
+            } else {
+              writeFunc("");
+            }
+            // cLoop(false);
+            break;
+          //equals
+          case "=":
+            //error catch if no function should be the last chance for this to break
+            if (typeof store.f !== "function") return;
+            else {
+              //set print as the return of functor from state with val1 and val2 input
+              cPrint(() => store.f(store.v1, store.v2));
+              //prepare store to begin looping by incrementing
+              cStore({ ...store, v1: store.f(store.v1, store.v2) });
+              //set loop ability
+              cLoop(true);
+            }
+            break;
+
+          //if button has not been specified that means we pass onto the following logic
+          default:
+            //if function and trigger are present, run function, reset state, prepare
+            //"clear" functionality
+            //trigger is defined to know that we only need 1 input for our math, not 2
+            if (func && trigger) {
+              if (!store.v1) return;
+              //run func and store in state
+              //reset v2
+              //set functor to clear
+              cStore({ v1: func(store.v1), v2: 0, f: "clear" });
+              cPrint(func(store.v1));
+              cLoop(false);
+            } else if (store.f && !trigger) {
+              //if no trigger is passed in, we know were waiting for the second user input
+              cStore({
+                ...store,
+                //note, if we have v1, v2, and func, assume user is chaining inputs. Calculate v1, change
+                //function, reset v2
+                v1:
+                  store.v1 && store.v2 && func && !loop
+                    ? store.f(store.v1, store.v2)
+                    : store.v1,
+                v2: store.v1 && store.v2 && func ? 0 : store.v2,
+                //store new function in store
+                f: func,
+              });
+              cLoop(false);
+              if (store.v1 && store.v2 && func && !loop)
+                cPrint(store.f(store.v1, store.v2));
+            }
+
+            break;
+        }
+        break;
+      default:
+        break;
     }
-  }
+  };
+  //#endregion
 
-  addNumbers=()=>{
-    let funcs = numbersArr.map(eachKey=>{
-      return <Numbers func={eachKey} key={eachKey} numberClick={this.numberClick}/>
-    })
-    return funcs
-  }
+  //#region jsx
 
-  numberClick=(givenNum)=>{
-    if(givenNum === "="){
-      let wholeValue = document.getElementById("calcScreen").value
-      this.handleEquals(wholeValue)
-    }else{
+  return (
+    <div className="outerbody">
+    <div className="calculatorBody">
 
-      document.getElementById("calcScreen").value+=givenNum
-    }
-  }
+      
+   <Screen/>
 
-
-  render() {
-
-    return (
-      <div className="outerbody">
-        <div className="calculatorBody">
-
-          <Screen/>
-
-          <div className="special-button-container special-btn-cont-margin-top">
-          {this.addSpecialButtons()}
-          </div>
-          <div className="special-button-container second-special-btn-cont-margin-top second-mobile-special">
-          {this.addSecondSpecialKeys()}
-          </div>
-
-          <div className="functions-container">
-            {this.addFunctions()}
-          </div>
-
-          <div className="numbers-container">
-            {this.addNumbers()}
-          </div>
-
-
-        </div>
-
-      </div>
-    );
-  }
+   
+          {val1 || 0}
+       
+          {buttonMap.map((v, i) => {
+            return (
+              <div className="btn-toolbar" key={i}>
+                {v.map((val, i) => {
+                  return (
+                    <Button
+                      onClick={(e) => {
+                        onclick(e, val.func, val.trigger);
+                      }}
+                      key={val.name}
+                      value={val.name}
+                      style={{
+                        display: "inline-block",
+                        width: val.name[0] === "M" ? "87px" : "109px",
+                      }}
+                    >
+                      {val.name}
+                    </Button>
+                  );
+                })}
+              </div>
+            );
+          })}
+    </div>
+    </div>
+  );
+  //#endregion
 }
 
 export default App;
